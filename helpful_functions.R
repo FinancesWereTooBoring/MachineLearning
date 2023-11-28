@@ -86,3 +86,14 @@ make_appyear_validation_split <- function(d, validation_year, test_year) {
   class(res) <- c("initial_validation_split", "three_way_split")
   res
 }
+years_and_max_dates <- function(x) {
+  x |>
+    group_by(AppYear) |>
+    summarise(
+      `Num observations` = n(),
+      `Max \`AppDate\`` = max(AppDate),
+      `Max \`OfferDate\`` = max(OfferDate),
+      `Max \`ResponseDate\`` = max(ResponseDate, na.rm = TRUE),
+      `\`ResponseDate\` is NA` = sum(is.na(ResponseDate))
+    )
+}
