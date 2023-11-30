@@ -17,5 +17,3 @@ analysis_assessment_split <-
 
 analysis_train <- training(analysis_assessment_split) |> years_and_max_dates()
 assessment_test <- testing(analysis_assessment_split) |> years_and_max_dates()
-
-

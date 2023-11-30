@@ -1,5 +1,6 @@
 library(tidymodels)
 library(tidyverse)
+source("./data_processing.R")
 
 linear_reg_recipe <- 
   recipe(Balance ~ ., data = Credit_train) |> 
