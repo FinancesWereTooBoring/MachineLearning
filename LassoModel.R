@@ -3,12 +3,13 @@ library(tidyverse)
 library(beepr)
 source("./data_processing.R")
 
-lasso_reg <- linear_reg(penalty = tune(), mixture = 1) %>%  
+lasso_logistic_reg <- 
+  logistic_reg(penalty = tune(), mixture = 1) |> 
   set_engine("glmnet")
 
-linear_reg_recipe <- 
+lasso_recipe <- 
   recipe(Status ~ ., data = analysis_train) |> 
-  step_rm(AppDate, OfferDate,ResponseDate,)|>
+  step_rm(AppDate, OfferDate,ResponseDate)|>
   step_dummy(all_nominal_predictors()) |> 
   step_dummy(all_outcomes()) |>
   # I still include interaction terms
@@ -26,10 +27,10 @@ lasso_wf <-
   add_model(lasso_reg)
 
 set.seed(1810)
-cv_folds <- vfold_cv(analysis_train, v = 9) #I have no clue if it's needed
+cv_folds <- vfold_cv(analysis_train, v = 10) #I have no clue if it's needed
 
-grid_lasso <- grid_regular(penalty(c(-2, 2), trans = log10_trans()), 
-                           levels = 20)
+grid_lasso <- grid_regular(penalty(c(1, 4), trans = log10_trans()), 
+                           levels = 40)
 lasso_tune <- 
   lasso_wf %>%  
   tune_grid(resamples = cv_folds, 
