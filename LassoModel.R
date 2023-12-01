@@ -2,9 +2,13 @@ library(tidymodels)
 library(tidyverse)
 source("./data_processing.R")
 
+lasso_reg <- linear_reg(penalty = tune(), mixture = 1) %>%  
+  set_engine("glmnet")
+
 linear_reg_recipe <- 
-  recipe(Balance ~ ., data = Credit_train) |> 
+  recipe(Status ~ ., data = analysis_train) |> 
   step_dummy(all_nominal_predictors()) |> 
+  step_dummy(all_outcomes()) |>
   # I still include interaction term
   step_interact(~ all_predictors():all_predictors()) |> 
   # remove any resulting variables that have only one value
