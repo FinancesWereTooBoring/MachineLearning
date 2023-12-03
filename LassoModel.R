@@ -11,7 +11,7 @@ lasso_recipe <-
   recipe(Status ~ ., data = analysis_train) |> 
   step_rm(AppDate, OfferDate,ResponseDate)|>
   step_dummy(all_nominal_predictors()) |> 
-  step_dummy(all_outcomes()) |>
+ # step_dummy(all_outcomes()) |>
   # I still include interaction terms
   #step_interact(~ all_predictors():all_predictors()) |> 
   # remove any resulting variables that have only one value
@@ -23,30 +23,34 @@ lasso_recipe <-
 
 lasso_wf <- 
   workflow() |> 
-  add_recipe(linear_reg_recipe) |> 
-  add_model(lasso_reg)
+  add_recipe(lasso_recipe) |> 
+  add_model(lasso_logistic_reg)
 
 set.seed(1810)
 cv_folds <- vfold_cv(analysis_train, v = 10) #I have no clue if it's needed
 
-grid_lasso <- grid_regular(penalty(c(1, 4), trans = log10_trans()), 
-                           levels = 40)
+grid_lasso <- 
+  grid_regular(penalty(range = c(-4.5, -1.5),
+                       trans = log10_trans()), 
+               levels = 100)
 lasso_tune <- 
-  lasso_wf %>%  
+  lasso_wf |> 
   tune_grid(resamples = cv_folds, 
             grid = grid_lasso,
-            metrics = metric_set(rmse, rsq_trad, mae))
-beepr::beep()
+            metrics = metric_set(accuracy, f_meas, kap, bal_accuracy))
+#Well, at least it works now. But we`ll need to discuss which metrics to take.
+#beepr::beep()
 
 lasso_tune_metrics <- 
-  lasso_tune %>%  
+  lasso_tune |> 
   collect_metrics()
+
 lasso_tune_metrics |> 
-  filter(.metric == "rmse") |> 
+  filter(.metric == "accuracy") |> 
   ggplot(aes(x = penalty, y = mean, 
              ymin = mean - std_err, ymax = mean + std_err)) + 
-  geom_pointrange(alpha = 0.5) + 
+  geom_pointrange(alpha = 0.5, size = .125) + 
   scale_x_log10() + 
-  labs(y = "RMSE", x = expression(lambda)) +
+  labs(y = "Accuracy", x = expression(lambda)) +
   theme_bw()
 
