@@ -11,7 +11,6 @@ lasso_recipe <-
   recipe(Status ~ ., data = analysis_train) |> 
   step_rm(AppDate, OfferDate,ResponseDate)|>
   step_dummy(all_nominal_predictors()) |> 
- # step_dummy(all_outcomes()) |>
   # I still include interaction terms
   #step_interact(~ all_predictors():all_predictors()) |> 
   # remove any resulting variables that have only one value
@@ -39,7 +38,7 @@ lasso_tune <-
             grid = grid_lasso,
             metrics = metric_set(accuracy, f_meas, kap, bal_accuracy))
 #Well, at least it works now. But we`ll need to discuss which metrics to take.
-#beepr::beep()
+beepr::beep()
 
 lasso_tune_metrics <- 
   lasso_tune |> 
@@ -53,4 +52,37 @@ lasso_tune_metrics |>
   scale_x_log10() + 
   labs(y = "Accuracy", x = expression(lambda)) +
   theme_bw()
+
+# Assume that the correct model is already chosen
+lasso_1se_model <- 
+  lasso_tune |> 
+  select_by_one_std_err(metric = "accuracy", desc(penalty))
+
+lasso_wf_tuned <- 
+  lasso_wf |> 
+  finalize_workflow(lasso_1se_model)
+
+# I guess last fit?
+lasso_last_fit <- 
+  lasso_wf_tuned |> 
+  last_fit(analysis_assessment_split, metrics = metric_set(accuracy, f_meas, kap, bal_accuracy))
+lasso_test_metrics <- 
+  lasso_last_fit |> 
+  collect_metrics()
+lasso_test_metrics <- 
+  lasso_test_metrics |> 
+  select(.metric, .estimate) |> 
+  mutate(model = "lasso")
+# output
+# .metric      .estimate model
+# <chr>            <dbl> <chr>
+#   1 accuracy         0.991 lasso
+# 2 f_meas           0.993 lasso
+# 3 kap              0.982 lasso
+# 4 bal_accuracy     0.990 lasso
+#Rn't those sexy asf?
+
+
+
+
 
