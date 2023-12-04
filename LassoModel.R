@@ -1,7 +1,10 @@
+install.packages("beepr")
 library(tidymodels)
 library(tidyverse)
 library(beepr)
 source("./data_processing.R")
+
+analysis_train$Status %>% table()
 
 lasso_logistic_reg <- 
   logistic_reg(penalty = tune(), mixture = 1) |> 
@@ -26,7 +29,7 @@ lasso_wf <-
   add_model(lasso_logistic_reg)
 
 set.seed(1810)
-cv_folds <- vfold_cv(analysis_train, v = 10) #I have no clue if it's needed
+cv_folds <- vfold_cv(analysis_train, v = 10, strata = Status) #I have no clue if it's needed
 
 grid_lasso <- 
   grid_regular(penalty(range = c(-4.5, -1.5),
