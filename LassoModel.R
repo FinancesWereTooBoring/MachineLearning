@@ -1,4 +1,3 @@
-install.packages("beepr")
 library(tidymodels)
 library(tidyverse)
 library(beepr)
