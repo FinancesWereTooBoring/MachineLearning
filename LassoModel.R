@@ -1,6 +1,7 @@
 library(tidymodels)
 library(tidyverse)
 library(beepr)
+library(yardstick)
 source("./data_processing.R")
 
 analysis_train$Status %>% table()
@@ -78,13 +79,14 @@ lasso_test_metrics <-
 # output
 # .metric      .estimate model
 # <chr>            <dbl> <chr>
-#   1 accuracy         0.991 lasso
-# 2 f_meas           0.993 lasso
-# 3 kap              0.982 lasso
-# 4 bal_accuracy     0.990 lasso
+# 1 accuracy         0.961 lasso
+# 2 f_meas           0.968 lasso
+# 3 kap              0.919 lasso
+# 4 bal_accuracy     0.967 lasso
 #Rn't those sexy asf?
 
-
+lasso_last_fit$.predictions[[1]] %>% conf_mat(truth = Status, estimate = .pred_class)
+conf_mat(truth = quality, estimate = class_A)
 
 
 
