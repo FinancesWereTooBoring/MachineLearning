@@ -131,3 +131,4 @@ cython_debug/
 #.idea/
 
 MachineLearning.Rproj
+.Rproj.user
