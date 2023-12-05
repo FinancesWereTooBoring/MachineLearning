@@ -18,6 +18,4 @@ analysis_assessment_split <-
 analysis_train <- training(analysis_assessment_split)
 assessment_test <- testing(analysis_assessment_split)
 
-# Special hi to lisa aka dba00
-# Boh danoooo
 
