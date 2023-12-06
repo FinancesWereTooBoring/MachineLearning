@@ -85,8 +85,13 @@ lasso_test_metrics <-
 # 4 bal_accuracy     0.967 lasso
 #Rn't those sexy asf?
 
-lasso_last_fit$.predictions[[1]] %>% conf_mat(truth = Status, estimate = .pred_class)
-conf_mat(truth = quality, estimate = class_A)
+conf_mat_lasso <- lasso_last_fit$.predictions[[1]] %>% conf_mat(truth = Status, estimate = .pred_class)
 
-
+sensitivity_lasso <- conf_mat_lasso[1]$table %>% sensitivity()
+precision_lasso <- conf_mat_lasso[1]$table %>% precision()
+accuracy_lasso <- conf_mat_lasso[1]$table %>% accuracy()
+# metrics
+# 1 sensitivity binary         0.945
+# 1 precision binary         0.993
+# 1 accuracy binary         0.961
 
