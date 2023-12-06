@@ -150,7 +150,7 @@ cv_folds <- vfold_cv(analysis_train, v = 10)
 
 #4, set tuning grid 
 #need larger numbers for k since n is larger here
-knn_tune_grid <- grid_regular(neighbors(range = c(5, 60)),
+knn_tune_grid <- grid_regular(neighbors(range = c(5, 60)), #check if range works
                               levels = 20)
 knn_tune_grid
 
@@ -187,6 +187,7 @@ knn_tune_metrics |>
 knn_tune_results |>
   show_best("accuracy", n = 5) |>
   arrange(desc(mean), desc(neighbors))
+#13 best neighbors 
 
 #9. select best k neighbors - highest value for accuracy
 knn_best_model <-
