@@ -3,7 +3,7 @@ library(tidyverse)
 library(beepr)
 library(yardstick)
 source("./data_processing.R")
-
+loaded_lass <- readRDS("lasso_model_tuned.rds")
 analysis_train$Status %>% table()
 
 lasso_logistic_reg <- 
@@ -65,6 +65,8 @@ lasso_wf_tuned <-
   lasso_wf |> 
   finalize_workflow(lasso_1se_model)
 
+#saveRDS(lasso_wf_tuned, "lasso_model_tuned.rds")
+
 # I guess last fit?
 lasso_last_fit <- 
   lasso_wf_tuned |> 
@@ -94,4 +96,24 @@ accuracy_lasso <- conf_mat_lasso[1]$table %>% accuracy()
 # 1 sensitivity binary         0.945
 # 1 precision binary         0.993
 # 1 accuracy binary         0.961
+
+# Work with final data set, in case we want to use lasso
+
+lasso_final_model <- lasso_wf_tuned %>% fit(data =final_training)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
