@@ -125,3 +125,12 @@ rf_final_fit |>
 rf_final_fit |>
   collect_predictions() |>
   conf_mat(truth = Status, estimate = .pred_class)
+
+#.metric     .estimator .estimate .config             
+#<chr>       <chr>          <dbl> <chr>               
+#1 accuracy    binary        0.650  Preprocessor1_Model1
+#2 kap         binary         0.0908 Preprocessor1_Model1
+#3 sensitivity binary        1      Preprocessor1_Model1
+#4 specificity binary        0.0743 Preprocessor1_Model1
+#5 roc_auc     binary        0.865  Preprocessor1_Model1
+
