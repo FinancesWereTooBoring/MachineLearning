@@ -73,3 +73,79 @@ boosting_tune_res <- tune_grid(
   grid = boosting_grid,
   metrics = class_metrics
 )
+#####
+
+boosting_tune_metrics <-
+  boosting_tune_res |>
+  collect_metrics()
+boosting_tune_metrics
+
+boosting_tune_metrics |>
+  filter(.metric == "accuracy") |>
+  ggplot(aes(
+    x = trees, y = 1 - mean,
+    colour = factor(tree_depth)
+  )) +
+  geom_path() +
+  labs(y = "Misclassification rate") +
+  scale_colour_manual(values = c("#D55E00", "#0072B2", "#009E73")) +
+  facet_wrap(~learn_rate, labeller = label_both) +
+  labs(colour = "tree_depth") +
+  theme_bw() +
+  theme(
+    legend.position = c(.98, .98),
+    legend.justification = c(1, 1),
+    legend.background = element_rect(colour = "black")
+  )
+
+boosting_tune_metrics |>
+  filter(.metric == "sensitivity") |>
+  ggplot(aes(
+    x = trees, y = mean,
+    colour = factor(tree_depth)
+  )) +
+  geom_path() +
+  labs(y = "Sensitivity") +
+  scale_colour_manual(values = c("#D55E00", "#0072B2", "#009E73")) +
+  facet_wrap(~learn_rate) +
+  labs(colour = "tree_depth") +
+  theme_bw() +
+  theme(
+    legend.position = c(.98, .98),
+    legend.justification = c(1, 1),
+    legend.background = element_rect(colour = "black")
+  )
+
+boosting_tune_metrics |>
+  filter(.metric == "specificity") |>
+  ggplot(aes(
+    x = trees, y = mean,
+    colour = factor(tree_depth)
+  )) +
+  geom_path() +
+  labs(y = "Specificity") +
+  scale_colour_manual(values = c("#D55E00", "#0072B2", "#009E73")) +
+  facet_wrap(~learn_rate) +
+  labs(colour = "tree_depth") +
+  theme_bw() +
+  theme(
+    legend.position = c(.98, .02),
+    legend.justification = c(1, 0),
+    legend.background = element_rect(colour = "black")
+  ) |>
+  filter(.metric == "specificity") |>
+  ggplot(aes(
+    x = trees, y = mean,
+    colour = factor(tree_depth)
+  )) +
+  geom_path() +
+  labs(y = "Specificity") +
+  scale_colour_manual(values = c("#D55E00", "#0072B2", "#009E73")) +
+  facet_wrap(~learn_rate) +
+  labs(colour = "tree_depth") +
+  theme_bw() +
+  theme(
+    legend.position = c(.98, .02),
+    legend.justification = c(1, 0),
+    legend.background = element_rect(colour = "black")
+  )
