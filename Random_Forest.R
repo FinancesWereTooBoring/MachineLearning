@@ -43,7 +43,7 @@ class_metrics <- metric_set(
 )
 
 # Tuning the model
-rf_tune_grid <- grid_regular(mtry(range = c(1, 17)), levels = 17)
+rf_tune_grid <- grid_regular(mtry(range = c(1, 14)), levels = 14)
 
 num_cores <- parallel::detectCores()
 num_cores
@@ -58,8 +58,70 @@ rf_tune_res <- tune_grid(
   metrics = class_metrics
 )
 
+rf_tune_res |>
+  collect_metrics() |>
+  filter(.metric %in% c("sensitivity", "specificity")) |>
+  ggplot(aes(
+    x = mtry, y = mean, ymin = mean - std_err,
+    ymax = mean + std_err,
+    colour = .metric
+  )) +
+  geom_errorbar() +
+  geom_line() +
+  geom_point() +
+  scale_colour_manual(values = c("#D55E00", "#0072B2")) +
+  facet_wrap(~.metric, ncol = 1, scales = "free_y") +
+  guides(colour = "none") +
+  theme_bw()
+
 # Unable to do randomforest with missing data in ResponseDate
 
 # Plotting results for metrics
 
+rf_tune_res |>
+  collect_metrics() |>
+  filter(.metric %in% c("sensitivity", "specificity")) |>
+  ggplot(aes(
+    x = mtry, y = mean, ymin = mean - std_err,
+    ymax = mean + std_err,
+    colour = .metric
+  )) +
+  geom_errorbar() +
+  geom_line() +
+  geom_point() +
+  scale_colour_manual(values = c("#D55E00", "#0072B2")) +
+  facet_wrap(~.metric, ncol = 1, scales = "free_y") +
+  guides(colour = "none") +
+  theme_bw()
 
+rf_tune_res |>
+  collect_metrics() |>
+  filter(.metric %in% c("roc_auc", "accuracy", "kap")) |>
+  ggplot(aes(
+    x = mtry, y = mean, ymin = mean - std_err,
+    ymax = mean + std_err, colour = .metric
+  )) +
+  geom_errorbar() +
+  geom_line() +
+  geom_point() +
+  scale_colour_manual(values = c("#D55E00", "#0072B2", "#009E73")) +
+  facet_wrap(~.metric, ncol = 1, scales = "free_y") +
+  guides(colour = "none") +
+  theme_bw()
+
+best_rf <- select_best(rf_tune_res, "sensitivity")
+rf_final_wf <- finalize_workflow(rf_tune_wf, best_rf)
+rf_final_wf
+
+# Test set
+set.seed(666420)
+rf_final_fit <-
+  rf_final_wf |>
+  last_fit(analysis_assessment_split, metrics = class_metrics)
+
+rf_final_fit |>
+  collect_metrics()
+
+rf_final_fit |>
+  collect_predictions() |>
+  conf_mat(truth = Status, estimate = .pred_class)
