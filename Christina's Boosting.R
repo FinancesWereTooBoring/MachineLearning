@@ -125,3 +125,31 @@ boosting_tune_metrics |>
     legend.justification = c(1, 0),
     legend.background = element_rect(colour = "black")
   )
+
+
+boosting_best <-
+  boosting_tune_metrics |>
+  filter(tree_depth == 3, learn_rate == 0.1, trees == 3500) |>
+  distinct(trees, tree_depth, learn_rate)
+
+boosting_final_wf <-
+  finalize_workflow(boosting_tune_wf, boosting_best)
+boosting_final_wf
+
+boosting_final_fit <-
+  boosting_final_wf |>
+  last_fit(analysis_assessment_split, metrics = class_metrics)
+
+boosting_test_results <-
+  boosting_final_fit |>
+  collect_metrics()
+boosting_test_results
+
+# A tibble: 5 × 4
+#.metric     .estimator .estimate .config             
+#<chr>       <chr>          <dbl> <chr>               
+# 1 accuracy    binary         0.933 Preprocessor1_Model1
+#2 kap         binary         0.861 Preprocessor1_Model1
+#3 sensitivity binary         0.899 Preprocessor1_Model1
+#4 specificity binary         0.989 Preprocessor1_Model1
+#5 roc_auc     binary         0.966 Preprocessor1_Model1
