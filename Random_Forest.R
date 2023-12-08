@@ -5,25 +5,22 @@ library(skimr)
 
 set.seed(221102)
 
-#cv_folds <-
-#  final_training_prediction_split |>
-#  vfold_cv(v = 10, strata = Status)
-
-skim(final_training_prediction_split)
-
-analysis_set_train <- training(final_training_prediction_split)
-assessment_set_test <- testing(final_training_prediction_split)
-
 # CV folds
 cv_folds <-
-  analysis_set_train |>
+  analysis_train |>
   vfold_cv(v = 10, strata = Status)
   
-skim(analysis_set_train)
+skim(analysis_train)
 
 # Defining the random forest model
 rf_recipe_downsample <-
-  recipe(Status ~., data = analysis_set_train) #|>
+  recipe(Status ~., data = analysis_train) |>
+  step_rm(AppDate, OfferDate,ResponseDate) |>
+  update_role(AppDate, OfferDate,ResponseDate, new_role = "metadata") |>
+  step_dummy(all_nominal_predictors()) |> 
+  step_zv(all_predictors()) |>
+  step_normalize(all_predictors())
+
   #themsis::step_downsample(Status)
 # need to double check if this is necessary
 
