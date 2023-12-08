@@ -112,3 +112,16 @@ boosting_tune_metrics |>
     legend.background = element_rect(colour = "black")
   )
 
+boosting_tune_metrics |>
+  filter(.metric %in% c("sensitivity", "specificity")) |>
+  ggplot(aes(x = trees, y = mean, colour = .metric)) +
+  geom_path() +
+  facet_grid(learn_rate ~ tree_depth, labeller = label_both) +
+  scale_colour_manual(values = c("#D55E00", "#0072B2")) +
+  theme_bw() +
+  labs(y = NULL) +
+  theme(
+    legend.position = c(.98, .2),
+    legend.justification = c(1, 0),
+    legend.background = element_rect(colour = "black")
+  )
