@@ -2,7 +2,6 @@ library(tidymodels)
 library(tidyverse)
 library(skimr)
 
-
 set.seed(221102)
 
 # CV folds
@@ -15,8 +14,8 @@ skim(analysis_train)
 # Defining the random forest model
 rf_recipe_downsample <-
   recipe(Status ~., data = analysis_train) |>
-  step_rm(AppDate, OfferDate,ResponseDate) |>
-  update_role(AppDate, OfferDate,ResponseDate, new_role = "metadata") |>
+  step_rm(AppDate, OfferDate, ResponseDate) |>
+  update_role(AppDate, OfferDate, ResponseDate, new_role = "metadata") |>
   step_dummy(all_nominal_predictors()) |> 
   step_zv(all_predictors()) |>
   step_normalize(all_predictors())
@@ -129,7 +128,7 @@ rf_final_fit |>
 #.metric     .estimator .estimate .config             
 #<chr>       <chr>          <dbl> <chr>               
 #1 accuracy    binary        0.650  Preprocessor1_Model1
-#2 kap         binary         0.0908 Preprocessor1_Model1
+#2 kap         binary        0.0908 Preprocessor1_Model1
 #3 sensitivity binary        1      Preprocessor1_Model1
 #4 specificity binary        0.0743 Preprocessor1_Model1
 #5 roc_auc     binary        0.865  Preprocessor1_Model1
