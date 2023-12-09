@@ -42,7 +42,8 @@ class_metrics <- metric_set(
 )
 
 # Tuning the model
-rf_tune_grid <- grid_regular(mtry(range = c(1, 14)), levels = 14)
+rf_tune_grid <- grid_regular(mtry(range = c(1, 25)), levels = 14)
+rf_tune_grid
 
 num_cores <- parallel::detectCores()
 num_cores
