@@ -1,6 +1,8 @@
 library(tidymodels)
 library(tidyverse)
 library(skimr)
+library(beepr)
+library(themsis)
 
 set.seed(221102)
 
@@ -18,9 +20,8 @@ rf_recipe_downsample <-
   update_role(AppDate, OfferDate, ResponseDate, new_role = "metadata") |>
   step_dummy(all_nominal_predictors()) |> 
   step_zv(all_predictors()) |>
-  step_normalize(all_predictors())
-
-  #themsis::step_downsample(Status)
+  step_normalize(all_predictors()) |>
+  themsis::step_downsample(Status)
 # need to double check if this is necessary
 
 rf_recipe_downsample
@@ -42,7 +43,7 @@ class_metrics <- metric_set(
 )
 
 # Tuning the model
-rf_tune_grid <- grid_regular(mtry(range = c(1, 25)), levels = 14)
+rf_tune_grid <- grid_regular(mtry(range = c(1, 14)), levels = 14)
 rf_tune_grid
 
 num_cores <- parallel::detectCores()
@@ -57,6 +58,8 @@ rf_tune_res <- tune_grid(
   grid = rf_tune_grid,
   metrics = class_metrics
 )
+
+beepr::beep()
 
 rf_tune_res |>
   collect_metrics() |>
