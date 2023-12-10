@@ -68,16 +68,16 @@ lasso_wf_tuned <-
 #saveRDS(lasso_wf_tuned, "lasso_model_tuned.rds")
 
 # I guess last fit?
-lasso_last_fit <- 
-  lasso_wf_tuned |> 
-  last_fit(analysis_assessment_split, metrics = metric_set(accuracy, f_meas, kap, bal_accuracy))
-lasso_test_metrics <- 
-  lasso_last_fit |> 
-  collect_metrics()
-lasso_test_metrics <- 
-  lasso_test_metrics |> 
-  select(.metric, .estimate) |> 
-  mutate(model = "lasso")
+# lasso_last_fit <- 
+#   lasso_wf_tuned |> 
+#   last_fit(analysis_assessment_split, metrics = metric_set(accuracy, f_meas, kap, bal_accuracy))
+# lasso_test_metrics <- 
+#   lasso_last_fit |> 
+#   collect_metrics()
+# lasso_test_metrics <- 
+#   lasso_test_metrics |> 
+#   select(.metric, .estimate) |> 
+#   mutate(model = "lasso")
 # output
 # .metric      .estimate model
 # <chr>            <dbl> <chr>
@@ -100,15 +100,31 @@ accuracy_lasso <- conf_mat_lasso[1]$table %>% accuracy()
 
 # Work with final data set, in case we want to use lasso
 
-#lasso_final_model <- lasso_wf_tuned %>% last_fit(final_training_prediction_split, metrics = metric_set(accuracy, f_meas, kap, bal_accuracy))
+lasso_final_model <- lasso_wf_tuned %>%
+  last_fit(final_training_prediction_split)
+
+lasso_final_model |>
+  augment() |>
+  group_by(Program) |>
+  summarise(
+    Predicted_N = sum(.pred_Enrolled >= .5),
+    Predicted_Prob = mean(.pred_Enrolled)
+  )
 
 
-
-
-
-
-
-
+# Program   Predicted_N Predicted_Prob
+# <fct>           <int>          <dbl>
+#   1 MScBA-AFM          47          0.504
+# 2 MScBA-BAM         146          0.614
+# 3 MScBA-MIM          54          0.438
+# 4 MScBIM             82          0.660
+# 5 MScFI             404          0.665
+# 6 MScGBS             77          0.596
+# 7 MScMI              28          0.570
+# 8 MScMM             112          0.640
+# 9 MScSCM             48          0.607
+# 10 MScSE              34          0.636
+# 11 MScSM             283          0.697
 
 
 
