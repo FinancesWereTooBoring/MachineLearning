@@ -1,5 +1,5 @@
 set.seed(82001)
-cv_folds <- analysis_train |> vfold_cv(v = 5, strata = Status)#change later to 10
+cv_folds <- analysis_train |> vfold_cv(v = 10, strata = Status)#change later to 10
 
 
 boosting_recipe <-
@@ -60,6 +60,7 @@ boosting_tune_metrics <-
   boosting_tune_res |>
   collect_metrics()
 boosting_tune_metrics
+
 
 boosting_tune_metrics |>
   filter(.metric == "accuracy") |>
@@ -153,3 +154,9 @@ boosting_test_results
 #3 sensitivity binary         0.899 Preprocessor1_Model1
 #4 specificity binary         0.989 Preprocessor1_Model1
 #5 roc_auc     binary         0.966 Preprocessor1_Model1
+
+boosting_final_fit |>
+  collect_predictions() |>
+  conf_mat(truth = Status, estimate = .pred_class)
+
+
