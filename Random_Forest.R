@@ -2,7 +2,7 @@ library(tidymodels)
 library(tidyverse)
 library(skimr)
 library(beepr)
-library(themsis)
+library(themis)
 
 set.seed(221102)
 
@@ -21,7 +21,7 @@ rf_recipe_downsample <-
   step_dummy(all_nominal_predictors()) |> 
   step_zv(all_predictors()) |>
   step_normalize(all_predictors()) |>
-  themsis::step_downsample(Status)
+  themis::step_downsample(Status)
 # need to double check if this is necessary
 
 rf_recipe_downsample
