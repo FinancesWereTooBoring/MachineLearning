@@ -107,11 +107,10 @@ lasso_final_model |>
   augment() |>
   group_by(Program) |>
   summarise(
-    Predicted_N = sum(.pred_Enrolled >= .5),
+    Predicted_N = sum(.pred_Enrolled >= .4),
     Predicted_Prob = mean(.pred_Enrolled)
   )
-
-
+lasso_final_model[5]$.predictions
 # Program   Predicted_N Predicted_Prob
 # <fct>           <int>          <dbl>
 #   1 MScBA-AFM          47          0.504
