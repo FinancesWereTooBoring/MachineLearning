@@ -4,9 +4,14 @@ library(tidyverse)
 load("data/offers_censored.RData")
 source("./helpful_functions.R")
 
+# We need to set a seed
+set.seed(666420)
+
 final_training_prediction_split <-
   offers |>
   make_appyear_split(test_year = 2023)
+
+#final_training_prediction_split <- initial_split(data = final_training_prediction_split, strata = Status)
 
 final_training <- training(final_training_prediction_split)
 
