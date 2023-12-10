@@ -185,3 +185,6 @@ boosting_test_results <-
   boosting_final_fit |>
   collect_metrics()
 boosting_test_results
+
+confution_matrix<- boosting_final_fit.predictions[[1]]|>
+  conf_mat(truth = Status, estimate = .pred_class)
