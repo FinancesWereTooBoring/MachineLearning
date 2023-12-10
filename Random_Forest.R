@@ -22,7 +22,6 @@ rf_recipe_downsample <-
   step_zv(all_predictors()) |>
   step_normalize(all_predictors()) |>
   themis::step_downsample(Status)
-# need to double check if this is necessary
 
 rf_recipe_downsample
 
