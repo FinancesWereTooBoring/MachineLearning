@@ -2,9 +2,9 @@ library(tidymodels)
 library(tidyverse)
 library(beepr)
 library(yardstick)
+library(themis)
 source("./data_processing.R")
-#loaded_lass <- readRDS("lasso_model_tuned.rds")
-analysis_train$Status %>% table()
+
 
 lasso_logistic_reg <- 
   logistic_reg(penalty = tune(), mixture = 1) |> 
@@ -20,7 +20,9 @@ lasso_recipe <-
   # and thus zero variance ("zv")
   step_zv(all_predictors()) |> 
   # normalize the predictors to have mean 0 and SD 1
-  step_normalize(all_predictors())
+  step_normalize(all_predictors()) |>
+  step_downsample(Status)
+
 
 
 lasso_wf <- 
@@ -32,52 +34,52 @@ set.seed(1810)
 cv_folds <- vfold_cv(analysis_train, v = 10, strata = Status) #I have no clue if it's needed
 
 grid_lasso <- 
-  grid_regular(penalty(range = c(-4.5, -1.5),
+  grid_regular(penalty(range = c(-3, -1.5),
                        trans = log10_trans()), 
                levels = 100)
 lasso_tune <- 
   lasso_wf |> 
   tune_grid(resamples = cv_folds, 
             grid = grid_lasso,
-            metrics = metric_set(accuracy, f_meas, kap, bal_accuracy))
+            metrics = metric_set(sensitivity, f_meas, kap, bal_accuracy))
 #Well, at least it works now. But we`ll need to discuss which metrics to take.
 beepr::beep()
 
 lasso_tune_metrics <- 
   lasso_tune |> 
   collect_metrics()
-
-lasso_tune_metrics |> 
-  filter(.metric == "accuracy") |> 
-  ggplot(aes(x = penalty, y = mean, 
-             ymin = mean - std_err, ymax = mean + std_err)) + 
-  geom_pointrange(alpha = 0.5, size = .125) + 
-  scale_x_log10() + 
-  labs(y = "Accuracy", x = expression(lambda)) +
-  theme_bw()
+ 
+ # lasso_tune_metrics |> 
+ #   filter(.metric == "sensitivity") |> 
+ #   ggplot(aes(x = penalty, y = mean, 
+ #              ymin = mean - std_err, ymax = mean + std_err)) + 
+ #   geom_pointrange(alpha = 0.5, size = .125) + 
+ #   scale_x_log10() + 
+ #   labs(y = "Sensitivity", x = expression(lambda)) +
+ #   theme_bw()
 
 # Assume that the correct model is already chosen
 lasso_1se_model <- 
   lasso_tune |> 
-  select_by_one_std_err(metric = "accuracy", desc(penalty))
+  select_by_one_std_err(metric = "sensitivity", desc(penalty))
 
 lasso_wf_tuned <- 
   lasso_wf |> 
   finalize_workflow(lasso_1se_model)
 
-#saveRDS(lasso_wf_tuned, "lasso_model_tuned.rds")
+#saveRDS(lasso_wf_tuned, "lasso_model_tuned_final.rds")
 
 # I guess last fit?
-# lasso_last_fit <- 
-#   lasso_wf_tuned |> 
-#   last_fit(analysis_assessment_split, metrics = metric_set(accuracy, f_meas, kap, bal_accuracy))
-# lasso_test_metrics <- 
-#   lasso_last_fit |> 
-#   collect_metrics()
-# lasso_test_metrics <- 
-#   lasso_test_metrics |> 
-#   select(.metric, .estimate) |> 
-#   mutate(model = "lasso")
+lasso_last_fit <- 
+   lasso_wf_tuned |> 
+   last_fit(analysis_assessment_split, metrics = metric_set(sensitivity, accuracy, precision, f_meas, kap, bal_accuracy))
+ lasso_test_metrics <- 
+   lasso_last_fit |> 
+   collect_metrics()
+ lasso_test_metrics <- 
+   lasso_test_metrics |> 
+   select(.metric, .estimate) |> 
+   mutate(model = "lasso")
 # output
 # .metric      .estimate model
 # <chr>            <dbl> <chr>
@@ -99,20 +101,21 @@ accuracy_lasso <- conf_mat_lasso[1]$table %>% accuracy()
 # 1 accuracy binary         0.961
 
 # Work with final data set, in case we want to use lasso
-
-lasso_final_model <- lasso_wf_tuned %>%
+loaded_lass <- readRDS("lasso_model_tuned_final.rds")
+lasso_final_model <- loaded_lass %>%
   last_fit(final_training_prediction_split)
+
+
 
 lasso_final_model |>
   augment() |>
   group_by(Program) |>
   summarise(
-    Predicted_N = sum(.pred_Enrolled >= .4),
+    Predicted_N = sum(.pred_Enrolled >= .5),
     Predicted_Prob = mean(.pred_Enrolled)
   )
 lasso_final_model[5]$.predictions
 # Program   Predicted_N Predicted_Prob
-# <fct>           <int>          <dbl>
 #   1 MScBA-AFM          47          0.504
 # 2 MScBA-BAM         146          0.614
 # 3 MScBA-MIM          54          0.438
@@ -126,10 +129,32 @@ lasso_final_model[5]$.predictions
 # 11 MScSM             283          0.697
 
 
+# Nadya, it's for you
 
+library(tidymodels)
+library(tidyverse)
+library(beepr)
+library(yardstick)
+library(themis)
+source("./data_processing.R")
 
+loaded_lass <- readRDS("lasso_model_tuned_final.rds")
+lasso_final_model <- loaded_lass %>%
+  last_fit(final_training_prediction_split, metrics = metric_set(sensitivity, precision))
 
+lasso_final_test_metrics <- 
+  lasso_final_model |> 
+  collect_metrics()
+lasso_final_test_metrics <- 
+  lasso_final_test_metrics |> 
+  select(.metric, .estimate) |> 
+  mutate(model = "lasso")
 
+# Metrics
+# .metric     .estimate model
+# <chr>           <dbl> <chr>
+# 1 sensitivity     0.970 lasso
+# 2 precision       0.999 lasso
 
 
 
