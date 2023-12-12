@@ -20,14 +20,14 @@ ggplot(apps_year, aes(x = as.factor(AppYear))) +
        y = "Number of Offers",
        fill = "Enrollment Status") +
   scale_fill_manual(values = c("Enrolled" = "cornflowerblue", "Not Enrolled" = "pink3")) +
-  theme_minimal()
+  theme_minimal() # proportion would be nice here
 
 # Distribution of enrollment statuses
 ggplot(offers, aes(x = Status)) +
   geom_bar() +
   labs(title = "Distribution of Enrollment Status",
        x = "Status",
-       y = "Count")
+       y = "Count")# maybe a per year view would be clearer
 
 # Number of applications per year
 ggplot(offers, aes(x = as.factor(AppYear))) +
@@ -36,8 +36,12 @@ ggplot(offers, aes(x = as.factor(AppYear))) +
        x = "Application Year",
        y = "Count")
 
+app4_3 <- offers %>%
+  filter(App4 == 3)
 
 
+ggplot(data = offers)+
+  geom_bar(aes(x = App4, fill = Status), position = "fill")
   
 
 str(offers)

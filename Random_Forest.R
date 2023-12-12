@@ -6,6 +6,7 @@ library(themis)
 
 set.seed(221102)
 
+
 # CV folds
 cv_folds <-
   analysis_train |>
@@ -37,9 +38,8 @@ rf_tune_wf <-
   add_model(rf_model_tune)
 
 class_metrics <- metric_set(
-  accuracy, kap, sensitivity,
-  specificity, roc_auc
-)
+  accuracy, sensitivity, specificity, precision,
+  kap, roc_auc)
 
 # Tuning the model
 rf_tune_grid <- grid_regular(mtry(range = c(1, 14)), levels = 14)
@@ -59,22 +59,6 @@ rf_tune_res <- tune_grid(
 )
 
 beepr::beep()
-
-rf_tune_res |>
-  collect_metrics() |>
-  filter(.metric %in% c("sensitivity", "specificity")) |>
-  ggplot(aes(
-    x = mtry, y = mean, ymin = mean - std_err,
-    ymax = mean + std_err,
-    colour = .metric
-  )) +
-  geom_errorbar() +
-  geom_line() +
-  geom_point() +
-  scale_colour_manual(values = c("#D55E00", "#0072B2")) +
-  facet_wrap(~.metric, ncol = 1, scales = "free_y") +
-  guides(colour = "none") +
-  theme_bw()
 
 # Unable to do randomforest with missing data in ResponseDate
 
@@ -128,11 +112,31 @@ rf_final_fit |>
   collect_predictions() |>
   conf_mat(truth = Status, estimate = .pred_class)
 
+rf_final_fit |>
+  collect_predictions() |>
+  roc_curve(Status, .pred_Enrolled) |>
+  autoplot()
+
 #.metric     .estimator .estimate .config             
 #<chr>       <chr>          <dbl> <chr>               
-#1 accuracy    binary        0.650  Preprocessor1_Model1
-#2 kap         binary        0.0908 Preprocessor1_Model1
-#3 sensitivity binary        1      Preprocessor1_Model1
-#4 specificity binary        0.0743 Preprocessor1_Model1
-#5 roc_auc     binary        0.865  Preprocessor1_Model1
+#1 accuracy    binary         0.949 Preprocessor1_Model1
+#2 kap         binary         0.893 Preprocessor1_Model1
+#3 sensitivity binary         0.925 Preprocessor1_Model1
+#4 specificity binary         0.987 Preprocessor1_Model1
+#5 roc_auc     binary         0.980 Preprocessor1_Model1
 
+# Working with final data set
+rf_final_model <- rf_final_wf %>%
+  last_fit(final_training_prediction_split)
+
+beepr::beep()
+
+rf_final_model |>
+  augment() |>
+  group_by(Program) |>
+  summarise(
+    Predicted_N = sum(.pred_Enrolled >= .3),
+    Predicted_Prob = mean(.pred_Enrolled)
+  )
+
+rf_final_model[5]$.predictions
