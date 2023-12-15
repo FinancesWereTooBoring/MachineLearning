@@ -10,6 +10,7 @@ str(offers)
 
 library(class)
 library(caret)
+library(themis)
 
 #checking for imbalance 
 offers |>
@@ -43,7 +44,8 @@ knn_recipe <-
   update_role(AppDate, OfferDate, ResponseDate, new_role = "id var") |>
   step_dummy(all_nominal_predictors()) |> 
   #removes predictors w 0 variance
-  step_zv(all_predictors()) 
+  step_zv(all_predictors()) |>
+  themis::step_downsample(Status)
 knn_recipe
 
 #3. create workflow object - combine model + recipe
@@ -65,7 +67,7 @@ knn_tune_grid <- grid_regular(neighbors(range = c(1, 17)), #check if range works
 knn_tune_grid
 
 #im not super sure which one
-knn_class_tune_grid <- tibble(neighbors = 5:20 * 2 + 1)
+knn_class_tune_grid <- tibble(neighbors = 1:17 * 2 + 1)
 knn_class_tune_grid
 
 #5. Tuning n nearest neighbors
@@ -130,8 +132,7 @@ knn_class_last_fit <-
   knn_workflow_final |>
   last_fit(analysis_assessment_split,
            metrics = metric_set(
-             kap, f_meas,
-             bal_accuracy, accuracy
+             accuracy, f_meas, kap, bal_accuracy 
            ),
            add_validation_set = TRUE
   )
@@ -150,7 +151,7 @@ conf_mat_knn <- knn_class_last_fit$.predictions[[1]] %>% conf_mat(truth = Status
 
 #              Truth
 #Prediction     Enrolled Not enrolled
-#Enrolled          947 TP         416 FP
+#Enrolled          947 TP      416 FP
 #Not enrolled       70          203
 
 sensitivity_knn <- conf_mat_knn[1]$table %>% sensitivity()
@@ -160,4 +161,4 @@ precision_knn <- conf_mat_knn[1]$table %>% precision()
 accuracy_knn <- conf_mat_knn[1]$table %>% accuracy()
 # 0.703
 
-lasso_final_model <- lasso_wf_tuned %>% fit(data =final_training)
+knn_final_model <- knn_workflow_tuned %>% fit(data =final_training)
