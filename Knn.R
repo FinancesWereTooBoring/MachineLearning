@@ -83,12 +83,12 @@ cv_folds <- vfold_cv(analysis_train, v = 10, strata = "Status")
 #two options
 #1
 #need larger numbers for k since n is larger here
-knn_tune_grid <- grid_regular(neighbors(range = c(1, 30)), #check if range works
-                              levels = 17)
+#knn_tune_grid <- grid_regular(neighbors(range = c(1, 30)), #check if range works
+                              #levels = 17)
 #knn_tune_grid
 
 #2
-knn_class_tune_grid <- tibble(neighbors = 1:17 * 2 + 1)
+knn_class_tune_grid <- tibble(neighbors = 1:50 * 2 + 1)
 knn_class_tune_grid
 
 #5. Tuning n nearest neighbors
@@ -127,6 +127,7 @@ knn_tune_results |>
 #27 best neighbors: .726 | 17 --> winner smaller k less bias also more accurate measure 
 #19 best neighbors: .718 | 10
 #41 best neighbors: .727 | 20
+#43 best neighbors: .729 | 50
 
 #9. select best k neighbors - highest value for accuracy
 knn_best_model <-
@@ -142,12 +143,12 @@ knn_1se_model <-
 #61 neighbors: .724 | 30 
 #35 neighbors: .726 | 17
 #41 neighbors: .727 | 20 - same
-
+#63 neighbors: .722 | 50
 
 #10. finalize workflow
 knn_workflow_final <-
   knn_workflow |>
-  finalize_workflow(knn_best_model)
+  finalize_workflow(knn_best_model) #chosen based on best bc we want high performance
 knn_workflow_final
 
 #11. test on test set 
@@ -186,12 +187,15 @@ conf_mat_knn <- knn_class_last_fit$.predictions[[1]] %>% conf_mat(truth = Status
 
 sensitivity_knn <- conf_mat_knn[1]$table %>% sensitivity()
 # 0.9311701
-# 0.7944936
+# 0.7944936 | 17
+# 0.8230088 | 50
 precision_knn <- conf_mat_knn[1]$table %>% precision()
 # 0.6947909
-# 0.7332123
+# 0.7332123 | 17
+# 0.7322835 | 50
 accuracy_knn <- conf_mat_knn[1]$table %>% accuracy()
 # 0.703
-#   0.693
+# 0.693 | 17
+#  0.703 | 50
 
 knn_final_model <- knn_workflow_tuned %>% fit(data =final_training)
