@@ -185,6 +185,12 @@ conf_mat_knn <- knn_class_last_fit$.predictions[[1]] %>% conf_mat(truth = Status
 #Enrolled          808          294
 #Not enrolled      209          325
 
+#based on grid 50 & 43 neighbors
+#Truth
+#Prediction     Enrolled Not enrolled
+#Enrolled          837          306
+#Not enrolled      180          313
+
 sensitivity_knn <- conf_mat_knn[1]$table %>% sensitivity()
 # 0.9311701
 # 0.7944936 | 17
