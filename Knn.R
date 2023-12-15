@@ -16,6 +16,7 @@ library(themis)
 offers |>
   count(Status) |>
   mutate(prop = n / sum(n))
+#result: imbalanced set 
 
 #------------------------------------------------------------------
 #0 check balance after splitting
@@ -24,11 +25,28 @@ analysis_train |>
   count(Status) |>
   mutate(prop = n / sum(n))
 
+## A tibble: 2 × 3
+#Status           n  prop
+#<fct>        <int> <dbl>
+#1 Enrolled      1472 0.622
+#2 Not enrolled   894 0.378
+
 #0. explore 
 analysis_train |>
   count(Status, Response) |>
   group_by(Status) |>
   mutate(prop = n / sum(n))
+
+## A tibble: 6 × 4
+# Groups:   Status [2]
+#Status       Response     n     prop
+#<fct>        <fct>    <int>    <dbl>
+#1 Enrolled     Accepted  1471 0.999   
+#2 Enrolled     Deferred     1 0.000679
+#3 Not enrolled Accepted   105 0.117   
+#4 Not enrolled Unknown    202 0.226   
+#5 Not enrolled Declined   409 0.457   
+#6 Not enrolled Deferred   178 0.199   
 
 #1. specify model
 knn_model <-
@@ -40,11 +58,13 @@ knn_model <-
 knn_recipe <-
   recipe(Status ~ ., 
          data = analysis_train) |>
+  #feature engineering
   step_normalize(App4) |> #only integer value needed for step 5
   update_role(AppDate, OfferDate, ResponseDate, new_role = "id var") |>
   step_dummy(all_nominal_predictors()) |> 
   #removes predictors w 0 variance
   step_zv(all_predictors()) |>
+  #counter for imbalance
   themis::step_downsample(Status)
 knn_recipe
 
@@ -61,12 +81,13 @@ cv_folds <- vfold_cv(analysis_train, v = 10, strata = "Status")
 
 #4, set tuning grid 
 #two options
+#1
 #need larger numbers for k since n is larger here
-knn_tune_grid <- grid_regular(neighbors(range = c(1, 17)), #check if range works
+knn_tune_grid <- grid_regular(neighbors(range = c(1, 30)), #check if range works
                               levels = 17)
-knn_tune_grid
+#knn_tune_grid
 
-#im not super sure which one
+#2
 knn_class_tune_grid <- tibble(neighbors = 1:17 * 2 + 1)
 knn_class_tune_grid
 
@@ -101,30 +122,33 @@ knn_tune_metrics |>
 
 #8. best neighbors 5 options ranked byt accuracy 
 knn_tune_results |>
-  show_best("accuracy", n = 5) |>
+  show_best("bal_accuracy", n = 5) |>
   arrange(desc(mean), desc(neighbors))
-#13 best neighbors 
+#27 best neighbors: .726 | 17 --> winner smaller k less bias also more accurate measure 
+#19 best neighbors: .718 | 10
+#41 best neighbors: .727 | 20
 
 #9. select best k neighbors - highest value for accuracy
 knn_best_model <-
   knn_tune_results |>
-  select_best(metric = "accuracy")
+  select_best(metric = "bal_accuracy")
 knn_best_model
+
+# 1SE rule 
+knn_1se_model <- 
+  knn_tune_results |> 
+  select_by_one_std_err(metric = "bal_accuracy", desc(neighbors))
+#49 neighbors: .723 | 25 
+#61 neighbors: .724 | 30 
+#35 neighbors: .726 | 17
+#41 neighbors: .727 | 20 - same
+
 
 #10. finalize workflow
 knn_workflow_final <-
   knn_workflow |>
   finalize_workflow(knn_best_model)
 knn_workflow_final
-
-# 1SE rule 
-knn_1se_model <- 
-  knn_tune_results |> 
-  select_by_one_std_err(metric = "accuracy", desc(neighbors))
-
-knn_workflow_tuned <- 
-  knn_workflow |> 
-  finalize_workflow(knn_1se_model)
 
 #11. test on test set 
 
@@ -154,11 +178,20 @@ conf_mat_knn <- knn_class_last_fit$.predictions[[1]] %>% conf_mat(truth = Status
 #Enrolled          947 TP      416 FP
 #Not enrolled       70          203
 
+#based on grid 17 & 27 neighbors
+#Truth 
+#Prediction     Enrolled Not enrolled
+#Enrolled          808          294
+#Not enrolled      209          325
+
 sensitivity_knn <- conf_mat_knn[1]$table %>% sensitivity()
 # 0.9311701
+# 0.7944936
 precision_knn <- conf_mat_knn[1]$table %>% precision()
 # 0.6947909
+# 0.7332123
 accuracy_knn <- conf_mat_knn[1]$table %>% accuracy()
 # 0.703
+#   0.693
 
 knn_final_model <- knn_workflow_tuned %>% fit(data =final_training)
