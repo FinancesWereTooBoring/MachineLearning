@@ -13,7 +13,8 @@ subset_offers <- subset(offers, AppYear!=2023)
 
 
 
-
+# bar plot illustrating the class imbalance
+#in the target variable 
 ggplot(subset_offers, aes(x = Status, fill = Status)) +
   geom_bar() +
   scale_fill_viridis_d(option = 'E', direction = -1, end = 0.8) +
@@ -22,12 +23,16 @@ ggplot(subset_offers, aes(x = Status, fill = Status)) +
        x = "Status",
        y = "Count")
 
+#bar plot illustrating the Responses of Enrolled 
+#and Non-enrolled Individuals
 ggplot(subset_offers, aes(x = Response, fill = Status)) +
   geom_bar() +scale_fill_viridis_d(option = 'E', direction = -1, end = 0.8) +
   theme_bw() +labs(title="Responses by Enrollement Status", x = "Response",
                    y = "Count")
 
 
+#Bar Plot illustrating the First Source of Information about the
+#University among Enrolled and Non-enrolled Individuals
 
 ggplot(subset_offers, aes(x = HowFirstHeard, fill = Status)) +
   geom_bar(position = "fill") +
@@ -38,7 +43,8 @@ ggplot(subset_offers, aes(x = HowFirstHeard, fill = Status)) +
 
 
 
-
+#bar plots depicting each demographic variable
+#and their Influence on Enrollment Status
 
 bar_plot_demo1 <-subset_offers |>ggplot(aes(x = Demo1, fill = Status)) +
   coord_flip() +
@@ -52,7 +58,8 @@ bar_plot_demo3 <-ggplot(offers,aes(x = Demo3, fill = Status)) +coord_flip() +
 combined_bar_plots <- cowplot::plot_grid(bar_plot_demo1, bar_plot_demo2,
                                          bar_plot_demo3, ncol = 2,rel_heights = c(1, 2))
 
-
+#Bar Plots Illustrating each of the student application prospects variables
+#and their impact on enrollment status
 bar_plot_App1 <-subset_offers |>ggplot(aes(x = App1, fill = Status)) +
   geom_bar(position = "fill") +
   coord_flip() +theme_bw()
