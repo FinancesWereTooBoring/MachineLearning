@@ -3,7 +3,6 @@
 #-------------------
 
 source('./data_processing.R')
-source('./data_split_ct.R')
 load('./offers_censored.RData')
 head(offers)
 str(offers)
@@ -48,6 +47,10 @@ analysis_train |>
 #5 Not enrolled Declined   409 0.457   
 #6 Not enrolled Deferred   178 0.199   
 
+# Set up a cross-validation control
+set.seed(666420)
+cv_folds <- vfold_cv(analysis_train, v = 10, strata = "Status")
+
 #1. specify model
 knn_model <-
   nearest_neighbor(neighbors = tune()) |>
@@ -75,10 +78,6 @@ knn_workflow <-
   add_recipe(knn_recipe)
 knn_workflow
 
-# Set up a cross-validation control
-set.seed(666420)
-cv_folds <- vfold_cv(analysis_train, v = 10, strata = "Status")
-
 #4, set tuning grid 
 #two options
 #1
@@ -88,7 +87,7 @@ cv_folds <- vfold_cv(analysis_train, v = 10, strata = "Status")
 #knn_tune_grid
 
 #2
-knn_class_tune_grid <- tibble(neighbors = 1:50 * 2 + 1)
+knn_class_tune_grid <- tibble(neighbors = 1:40 * 2 + 1)
 knn_class_tune_grid
 
 #5. Tuning n nearest neighbors
@@ -100,7 +99,7 @@ knn_tune_results <-
     grid = knn_class_tune_grid,
     metrics = metric_set(
       kap , f_meas, #all metrics as close to one as possible for good measure
-      bal_accuracy, accuracy,
+      bal_accuracy, accuracy, sensitivity
     )
   ) |>
   suppressWarnings()
@@ -122,33 +121,26 @@ knn_tune_metrics |>
 
 #8. best neighbors 5 options ranked byt accuracy 
 knn_tune_results |>
-  show_best("bal_accuracy", n = 5) |>
+  show_best("sensitivity", n = 5) |>
   arrange(desc(mean), desc(neighbors))
-#27 best neighbors: .726 | 17 --> winner smaller k less bias also more accurate measure 
-#19 best neighbors: .718 | 10
-#41 best neighbors: .727 | 20
-#43 best neighbors: .729 | 50
+
 
 #9. select best k neighbors - highest value for accuracy
 knn_best_model <-
   knn_tune_results |>
-  select_best(metric = "bal_accuracy")
+  select_best(metric = "sensitivity")
 knn_best_model
 
 # 1SE rule 
 knn_1se_model <- 
   knn_tune_results |> 
-  select_by_one_std_err(metric = "bal_accuracy", desc(neighbors))
-#49 neighbors: .723 | 25 
-#61 neighbors: .724 | 30 
-#35 neighbors: .726 | 17
-#41 neighbors: .727 | 20 - same
-#63 neighbors: .722 | 50
+  select_by_one_std_err(metric = "sensitivity", desc(neighbors))
+knn_1se_model
 
 #10. finalize workflow
 knn_workflow_final <-
   knn_workflow |>
-  finalize_workflow(knn_best_model) #chosen based on best bc we want high performance
+  finalize_workflow(knn_1se_model) 
 knn_workflow_final
 
 #11. test on test set 
@@ -174,34 +166,16 @@ knn_class_metrics <- knn_class_metrics |>
 #13. convert to comparable metrics 
 conf_mat_knn <- knn_class_last_fit$.predictions[[1]] %>% conf_mat(truth = Status, estimate = .pred_class)
 
-#              Truth
-#Prediction     Enrolled Not enrolled
-#Enrolled          947 TP      416 FP
-#Not enrolled       70          203
-
-#based on grid 17 & 27 neighbors
-#Truth 
-#Prediction     Enrolled Not enrolled
-#Enrolled          808          294
-#Not enrolled      209          325
-
-#based on grid 50 & 43 neighbors
-#Truth
-#Prediction     Enrolled Not enrolled
-#Enrolled          837          306
-#Not enrolled      180          313
+#40 grid sensitivity 
+Truth
+Prediction     Enrolled Not enrolled
+Enrolled          961          392
+Not enrolled       56          227
 
 sensitivity_knn <- conf_mat_knn[1]$table %>% sensitivity()
-# 0.9311701
-# 0.7944936 | 17
-# 0.8230088 | 50
+#.945
 precision_knn <- conf_mat_knn[1]$table %>% precision()
-# 0.6947909
-# 0.7332123 | 17
-# 0.7322835 | 50
+#.710
 accuracy_knn <- conf_mat_knn[1]$table %>% accuracy()
-# 0.703
-# 0.693 | 17
-#  0.703 | 50
-
+# .726
 knn_final_model <- knn_workflow_tuned %>% fit(data =final_training)
