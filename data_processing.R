@@ -1,7 +1,7 @@
 library(tidymodels)
 library(tidyverse)
 
-load("data/offers_censored.RData")
+load("data/offers_uncensored.RData")
 source("./helpful_functions.R")
 
 # We need to set a seed
