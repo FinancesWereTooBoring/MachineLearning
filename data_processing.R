@@ -1,18 +1,15 @@
 library(tidymodels)
 library(tidyverse)
 
-load("data/offers_uncensored.RData")
+load("data/offers_censored.RData")
 source("./helpful_functions.R")
 
-<<<<<<< HEAD
-set.seed(666420)
-
 #prediction
-=======
+
 # We need to set a seed
 set.seed(666420)
 
->>>>>>> main
+
 final_training_prediction_split <-
   offers |>
   make_appyear_split(test_year = 2023)
@@ -30,8 +27,6 @@ analysis_assessment_split <-
   make_appyear_split(test_year = 2022)
 
 analysis_train <- training(analysis_assessment_split)
-<<<<<<< HEAD
 assessment_test <- testing(analysis_assessment_split)
-=======
-assessment_test <- testing(analysis_assessment_split)
->>>>>>> main
+
+
