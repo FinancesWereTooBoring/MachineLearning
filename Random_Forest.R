@@ -60,13 +60,11 @@ rf_tune_res <- tune_grid(
 
 beepr::beep()
 
-# Unable to do randomforest with missing data in ResponseDate
-
 # Plotting results for metrics
 
 rf_tune_res |>
   collect_metrics() |>
-  filter(.metric %in% c("sensitivity", "specificity")) |>
+  filter(.metric %in% c("sensitivity", "precision")) |>
   ggplot(aes(
     x = mtry, y = mean, ymin = mean - std_err,
     ymax = mean + std_err,

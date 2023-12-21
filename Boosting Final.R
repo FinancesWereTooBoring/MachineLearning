@@ -1,12 +1,37 @@
-set.seed(82001)
-cv_folds <- analysis_train |> vfold_cv(v = 10, strata = Status)#change later to 10
+library(tidyverse)
+library(tidymodels)
+
+load("offers_censored.RData")
+source("./helpful_functions.R")
+
+# We need to set a seed
+set.seed(666420)
+
+final_training_prediction_split <-
+  offers |>
+  make_appyear_split(test_year = 2023)
+
+
+
+final_training <- training(final_training_prediction_split)
+
+analysis_assessment_split <-
+  offers |>
+  censor_post_prediction_responses(years = 2022)|>
+  drop_post_prediction_offers()|>
+  filter(AppYear <= 2022) |>
+  make_appyear_split(test_year = 2022)
+
+analysis_train <- training(analysis_assessment_split)
+assessment_test <- testing(analysis_assessment_split)
+
+#
+cv_folds <- analysis_train |> vfold_cv(v = 10, strata = Status)
 
 
 boosting_recipe <-
-  recipe(Status ~ ., data = offers) |>
-  # remove these variables:
+  recipe(Status ~ ., data = analysis_train) |>
   step_rm(AppDate, OfferDate, ResponseDate) |>
-  # convert to dummy variables:
   step_dummy(all_nominal_predictors(), one_hot = TRUE) |>
   themis::step_downsample(Status)
 
@@ -15,8 +40,7 @@ boosting_model_tune <-
     trees = tune(),
     tree_depth = tune(),
     learn_rate = tune(),
-    stop_iter = 500
-  ) |>
+    stop_iter = 400) |>
   set_mode("classification") |>
   set_engine("xgboost")
 
@@ -28,22 +52,21 @@ boosting_tune_wf
 
 class_metrics <- metric_set(
   accuracy, kap, sensitivity,
-  specificity, roc_auc, precision
-)
+  specificity, roc_auc)
 
 num_cores <- parallel::detectCores()
 num_cores
 
 doParallel::registerDoParallel(cores = num_cores - 1L)
 
-set.seed(8504)
+
 grid_max_entropy(trees(range = c(0, 10000)),
                  learn_rate(range = c(-2, -1)),
                  tree_depth(),
-                 size = 20)
+                 size = 10)#20
 
 boosting_grid <- crossing(
-  trees = 500 * 1:10,#change later to 20
+  trees = 500 * 1:20,
   learn_rate = c(0.1, 0.01, 0.001),
   tree_depth = c(1, 2, 3))
 boosting_grid
@@ -52,10 +75,8 @@ boosting_tune_res <- tune_grid(
   boosting_tune_wf,
   resamples = cv_folds,
   grid = boosting_grid,
-  metrics = class_metrics
-)
+  metrics = class_metrics)
 
-beepr:beep()
 #####
 
 boosting_tune_metrics <-
@@ -63,9 +84,8 @@ boosting_tune_metrics <-
   collect_metrics()
 boosting_tune_metrics
 
-
 boosting_tune_metrics |>
-  filter(.metric == "accuracy") |>
+  filter(.metric == "sensitivity") |>
   ggplot(aes(
     x = trees, y = 1 - mean,
     colour = factor(tree_depth)
@@ -101,10 +121,13 @@ boosting_tune_metrics |>
   )
 
 boosting_tune_metrics |>
-  filter(.metric == "precision") |>
-  ggplot(aes(x = trees, y = mean, colour = factor(tree_depth))) +
+  filter(.metric == "specificity") |>
+  ggplot(aes(
+    x = trees, y = mean,
+    colour = factor(tree_depth)
+  )) +
   geom_path() +
-  labs(y = "precision") +
+  labs(y = "Specificity") +
   scale_colour_manual(values = c("#D55E00", "#0072B2", "#009E73")) +
   facet_wrap(~learn_rate) +
   labs(colour = "tree_depth") +
@@ -114,23 +137,12 @@ boosting_tune_metrics |>
     legend.justification = c(1, 0),
     legend.background = element_rect(colour = "black")
   )
+#######
+
+
 
 boosting_tune_metrics |>
-  filter(.metric %in% c("sensitivity", "precision")) |>
-  ggplot(aes(x = trees, y = mean, colour = .metric)) +
-  geom_path() +
-  facet_grid(learn_rate ~ tree_depth, labeller = label_both) +
-  scale_colour_manual(values = c("#D55E00", "#0072B2")) +
-  theme_bw() +
-  labs(y = NULL) +
-  theme(
-    legend.position = c(.98, .2),
-    legend.justification = c(1, 0),
-    legend.background = element_rect(colour = "black")
-  )
-
-boosting_tune_metrics |>
-  filter(.metric %in% c("sensitivity", "specificity")) |>
+  filter(.metric %in% c("sensitivity", "percision")) |>
   ggplot(aes(x = trees, y = mean, colour = .metric)) +
   geom_path() +
   facet_grid(learn_rate ~ tree_depth, labeller = label_both) +
@@ -168,7 +180,7 @@ boosting_tune_metrics |>
 boosting_tune_metrics |>
   filter(learn_rate == 0.01 & tree_depth == 2 & trees <= 5000) |>
   select(trees:learn_rate, .metric, mean, std_err) |>
-  filter(.metric %in% c("sensitivity", "specificity")) |>
+  filter(.metric %in% c("sensitivity", "percision")) |>
   mutate(low = mean - std_err, high = mean + std_err) |>
   select(-std_err) |>
   pivot_wider(
@@ -216,37 +228,3 @@ confution_matrix<- predictions|>
 sensitivity_Boosting <- confution_matrix[1]$table %>% sensitivity()
 precision_Boosting <- confution_matrix[1]$table %>% precision()
 accuracy_Boosting <- confution_matrix[1]$table %>% accuracy()
-
-
-boosting_best <-
-  boosting_tune_metrics |>
-  filter(tree_depth == 3, learn_rate == 0.1, trees == 3500) |>
-  distinct(trees, tree_depth, learn_rate)
-
-boosting_final_wf <-
-  finalize_workflow(boosting_tune_wf, boosting_best)
-boosting_final_wf
-
-boosting_final_fit <-
-  boosting_final_wf |>
-  last_fit(analysis_assessment_split, metrics = class_metrics)
-
-boosting_test_results <-
-  boosting_final_fit |>
-  collect_metrics()
-boosting_test_results
-
-# A tibble: 5 × 4
-#.metric     .estimator .estimate .config             
-#<chr>       <chr>          <dbl> <chr>               
-# 1 accuracy    binary         0.933 Preprocessor1_Model1
-#2 kap         binary         0.861 Preprocessor1_Model1
-#3 sensitivity binary         0.899 Preprocessor1_Model1
-#4 specificity binary         0.989 Preprocessor1_Model1
-#5 roc_auc     binary         0.966 Preprocessor1_Model1
-
-boosting_final_fit |>
-  collect_predictions() |>
-  conf_mat(truth = Status, estimate = .pred_class)
-
-
