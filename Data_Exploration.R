@@ -75,19 +75,24 @@ bar_plot_App4 <-offers |>ggplot(aes(x = App4, fill = Status)) +
 combined_bar_plotsapp <- cowplot::plot_grid(bar_plot_App1, bar_plot_App3,
                                             bar_plot_App2,bar_plot_App4, ncol = 2)
 
+#Bar Plots Illustrating each of the students' educational background
+#and its impact on enrollment status
 
-
-
-
-
-
-
-
-
-
-offers |>ggplot(aes(x = Response, fill = Status)) +
+bar_plot_Edu1 <-subset_offers |>ggplot(aes(x = Edu1, fill = Status)) +
   geom_bar(position = "fill") +
-  scale_fill_viridis_d(option = 'E', direction = -1, end = .8) +
-  theme_bw() +
-  facet_wrap(~AppYear)
+  coord_flip() +theme_bw()
+bar_plot_Edu2 <-subset_offers |>ggplot(aes(x = Edu2, fill = Status)) +
+  geom_bar(position = "fill") +
+  coord_flip() +theme_bw()
+bar_plot_Edu3 <-subset_offers |>ggplot(aes(x = Edu3, fill = Status)) +
+  geom_bar(position = "fill") +
+  coord_flip() +theme_bw()
+combined_bar_plotsedu <- cowplot::plot_grid(bar_plot_Edu1, bar_plot_Edu2,
+                                            bar_plot_Edu3, ncol = 2)
+
+
+
+
+
+
 
