@@ -155,9 +155,10 @@ boosting_tune_metrics |>
     legend.background = element_rect(colour = "black")
   )
 
-
+subset_offers %>%
+  filter(App2 == "E")
 boosting_tune_metrics |>
-  filter(learn_rate < 0.1 & tree_depth >= 2 & trees <= 5000) |>
+  filter(learn_rate < 0.01 & tree_depth >= 2 & trees <= 5000) |>
   select(trees:learn_rate, .metric, mean) |>
   pivot_wider(
     id_cols = trees:learn_rate,

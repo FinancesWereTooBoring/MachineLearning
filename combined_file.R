@@ -8,9 +8,21 @@ library(themis)
 library(cowplot)
 source("./helpful_functions.R")
 load("./offers_censored.RData")
+
+# Creating subset of data not including 2023
+subset_offers <- subset(offers, AppYear!=2023)
+
 # Data exploration
-# bar plot illustrating the class imbalance
-#in the target variable 
+
+# Response of enrolled and non-enrolled individual
+ggplot(subset_offers, aes(x = Response, fill = Status)) +
+  geom_bar() +
+  scale_fill_viridis_d(option = 'E', direction = -1, end = 0.8) +
+  theme_bw() +
+  labs(title="Responses by Enrollement Status", x = "Response",
+       y = "Count")
+
+# Class imbalance
 ggplot(subset_offers, aes(x = Status, fill = Status)) +
   geom_bar() +
   scale_fill_viridis_d(option = 'E', direction = -1, end = 0.8) +
@@ -20,111 +32,51 @@ ggplot(subset_offers, aes(x = Status, fill = Status)) +
        x = "Status",
        y = "Count")
 
-#bar plot illustrating the Responses of Enrolled 
-#and Non-enrolled Individuals
-ggplot(subset_offers, aes(x = Response, fill = Status)) +
-  geom_bar() +
-  scale_fill_viridis_d(option = 'E', direction = -1, end = 0.8) +
-  theme_bw() +
-  labs(title="Responses by Enrollement Status", x = "Response",
-       y = "Count")
-
-#Bar Plot illustrating the First Source of Information about the
-#University among Enrolled and Non-enrolled Individuals
-
-ggplot(subset_offers, aes(x = HowFirstHeard, fill = Status)) +
-  geom_bar(position = "fill") +
-  theme_bw() +scale_fill_viridis_d(option = 'E', direction = -1, end = 0.8) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8)) +
-  labs( title="Enrollement Status based on 'How did you first heard about RSM'",
-        x = "HowFirstHeard", y = "Y-axis Label")
-
-#bar plots depicting each demographic variable
-#and their Influence on Enrollment Status
-
-bar_plot_demo1 <-subset_offers |>ggplot(aes(x = Demo1, fill = Status)) +
+# Demographic variables
+bar_plot_demo1 <- subset_offers |>ggplot(aes(x = Demo1, fill = Status)) +
   coord_flip() +
   geom_bar(position = "fill") +
   scale_fill_viridis_d(option = 'E', direction = -1, end = 0.8) +
   theme_bw()
-bar_plot_demo1
 
 bar_plot_demo2 <-subset_offers |>ggplot(aes(x = Demo2, fill = Status)) +coord_flip() +
   geom_bar(position = "fill") +
   scale_fill_viridis_d(option = 'E', direction = -1, end = 0.8) +
   theme_bw()
-bar_plot_demo2
 
 bar_plot_demo3 <-ggplot(subset_offers,aes(x = Demo3, fill = Status)) +coord_flip() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))+
   geom_bar(position = "fill") +
   scale_fill_viridis_d(option = 'E', direction = -1, end = 0.8) +
   theme_bw()
-bar_plot_demo3
 
 combined_bar_plots_demo <- cowplot::plot_grid(bar_plot_demo1, bar_plot_demo2,
                                          bar_plot_demo3, ncol = 2,rel_heights = c(1, 2))
 combined_bar_plots_demo
 
-#Education plots
+# Education variables
 bar_plot_edu1 <-subset_offers |>ggplot(aes(x = Edu1, fill = Status)) +
   coord_flip() +
   geom_bar(position = "fill") +
   scale_fill_viridis_d(option = 'E', direction = -1, end = 0.8) +
   theme_bw()
-bar_plot_edu1
 
 bar_plot_edu2 <-subset_offers |>ggplot(aes(x = Edu2, fill = Status)) +coord_flip() +
   geom_bar(position = "fill") +
   scale_fill_viridis_d(option = 'E', direction = -1, end = 0.8) +
   theme_bw()
-bar_plot_edu2
 
 bar_plot_edu3 <-ggplot(subset_offers,aes(x = Edu3, fill = Status)) +coord_flip() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))+
   geom_bar(position = "fill") +
   scale_fill_viridis_d(option = 'E', direction = -1, end = 0.8) +
   theme_bw()
-bar_plot_edu3 
-
+ 
 combined_bar_plots_edu <- cowplot::plot_grid(bar_plot_edu1, bar_plot_edu2,
                                          bar_plot_edu3, ncol = 2,rel_heights = c(1, 2))
 combined_bar_plots_edu
 
-#Bar Plots Illustrating each of the student application prospects variables
-#and their impact on enrollment status
-bar_plot_App1 <-subset_offers |>ggplot(aes(x = App1, fill = Status)) +
-  geom_bar(position = "fill") +
-  coord_flip() +
-  scale_fill_viridis_d(option = 'E', direction = -1, end = 0.8) +
-  theme_bw()
-bar_plot_App2 <- subset_offers |>ggplot(aes(x = App2, fill = Status)) +
-  geom_bar(position = "fill") +
-  coord_flip() +
-  scale_fill_viridis_d(option = 'E', direction = -1, end = 0.8) +
-  theme_bw()
-bar_plot_App3 <- subset_offers |>ggplot(aes(x = App3, fill = Status)) +
-  geom_bar(position = "fill") +
-  coord_flip() +
-  scale_fill_viridis_d(option = 'E', direction = -1, end = 0.8) +
-  theme_bw()
-bar_plot_App4 <- subset_offers |>ggplot(aes(x = App4, fill = Status)) +
-  geom_bar(position = "fill") +
-  coord_flip() +
-  scale_fill_viridis_d(option = 'E', direction = -1, end = 0.8) +
-  theme_bw()
-
-combined_bar_plotsapp <- cowplot::plot_grid(bar_plot_App1, bar_plot_App3,
-                                            bar_plot_App2,bar_plot_App4, ncol = 2)
-combined_bar_plotsapp
-subset_offers |>ggplot(aes(x = Response, fill = Status)) +
-  geom_bar(position = "fill") +
-  scale_fill_viridis_d(option = 'E', direction = -1, end = .8) +
-  theme_bw() +
-  facet_wrap(~AppYear)
-
 # Splits of the data.
-
 # We need to set a seed
 set.seed(666420)
 
@@ -132,7 +84,6 @@ set.seed(666420)
 final_training_prediction_split <-
   offers |>
   make_appyear_split(test_year = 2023)
-
 
 final_training <- training(final_training_prediction_split)
 
@@ -146,6 +97,12 @@ analysis_assessment_split <-
 
 analysis_train <- training(analysis_assessment_split)
 assessment_test <- testing(analysis_assessment_split)
+
+# Parallel for faster modelling
+num_cores <- parallel::detectCores()
+num_cores
+
+doParallel::registerDoParallel(cores = num_cores - 1L)
 
 # The first method tried - knn.
 
@@ -161,11 +118,10 @@ knn_recipe <-
          data = analysis_train) |>
   #feature engineering
   step_normalize(App4) |> #only integer value needed for step 5
-  update_role(AppDate, OfferDate, ResponseDate, new_role = "id var") |>
   step_dummy(all_nominal_predictors()) |> 
-  #removes predictors w 0 variance
+  # removes predictors with 0 variance
   step_zv(all_predictors()) |>
-  #counter for imbalance
+  # account for imbalance
   themis::step_downsample(Status)
 knn_recipe
 
@@ -182,7 +138,7 @@ cv_folds_knn <- vfold_cv(analysis_train, v = 10, strata = "Status")
 
 #4, set tuning grid 
 
-knn_class_tune_grid <- tibble(neighbors = 1:50 * 2 + 1)
+knn_class_tune_grid <- tibble(neighbors = 1:40 * 2 + 1)
 knn_class_tune_grid
 
 #5. Tuning n nearest neighbors
@@ -213,7 +169,7 @@ knn_tune_metrics |>
   facet_wrap(~.metric, scales = "free_y") +
   theme_bw()
 
-#8. best neighbors 5 options ranked byt accuracy 
+#8. best neighbors 5 options ranked by accuracy 
 knn_tune_results |>
   show_best("sensitivity", n = 5) |>
   arrange(desc(mean), desc(neighbors))
@@ -232,6 +188,7 @@ knn_best_model
 knn_1se_model <- 
   knn_tune_results |> 
   select_by_one_std_err(metric = "sensitivity", desc(neighbors))
+
 #10. finalize workflow
 knn_workflow_final <-
   knn_workflow |>
@@ -248,6 +205,7 @@ knn_class_last_fit <-
            ),
            add_validation_set = TRUE
   )
+
 knn_class_metrics <-
   knn_class_last_fit |>
   collect_metrics()
@@ -267,12 +225,12 @@ accuracy_knn <- conf_mat_knn[1]$table %>% accuracy()
 
 # Lasso regression
 
-# Model specification.
+# Model specification
 lasso_logistic_reg <- 
   logistic_reg(penalty = tune(), mixture = 1) |> 
   set_engine("glmnet")
 
-# Recipe.
+# Recipe
 lasso_recipe <- 
   recipe(Status ~ ., data = analysis_train) |> 
   step_rm(AppDate, OfferDate,ResponseDate)|>
@@ -282,7 +240,7 @@ lasso_recipe <-
   step_normalize(all_predictors()) |>
   step_downsample(Status)
 
-# Set up workflow.
+# Set up workflow
 lasso_wf <- 
   workflow() |> 
   add_recipe(lasso_recipe) |> 
@@ -344,7 +302,6 @@ precision_lasso <- conf_mat_lasso[1]$table %>% precision()
 accuracy_lasso <- conf_mat_lasso[1]$table %>% accuracy()
 
 # Random forest.
-
 set.seed(221102)
 
 # CV folds
@@ -352,12 +309,10 @@ cv_folds_rf <-
   analysis_train |>
   vfold_cv(v = 10, strata = Status)
 
-
 # Defining the random forest recipe
 rf_recipe_downsample <-
   recipe(Status ~., data = analysis_train) |>
   step_rm(AppDate, OfferDate, ResponseDate) |>
-  update_role(AppDate, OfferDate, ResponseDate, new_role = "metadata") |>
   step_dummy(all_nominal_predictors()) |> 
   step_zv(all_predictors()) |>
   step_normalize(all_predictors()) |>
@@ -382,11 +337,6 @@ class_metrics <- metric_set(
 # Tuning the model
 rf_tune_grid <- grid_regular(mtry(range = c(1, 14)), levels = 14)
 rf_tune_grid
-
-num_cores <- parallel::detectCores()
-num_cores
-
-doParallel::registerDoParallel(cores = num_cores - 1L)
 
 set.seed(231164)
 rf_tune_res <- tune_grid(
@@ -415,7 +365,6 @@ rf_tune_res |>
   theme_bw()
 
 # Finishing workflow.
-
 best_rf <- select_best(rf_tune_res, "sensitivity")
 rf_final_wf <- finalize_workflow(rf_tune_wf, best_rf)
 
@@ -473,16 +422,10 @@ class_metrics <- metric_set(
   accuracy, kap, sensitivity,
   specificity, roc_auc, precision)
 
-num_cores <- parallel::detectCores()
-num_cores
-
-doParallel::registerDoParallel(cores = num_cores - 1L)
-
-
 grid_max_entropy(trees(range = c(0, 10000)),
                  learn_rate(range = c(-2, -1)),
                  tree_depth(),
-                 size = 10)#20
+                 size = 10)
 
 boosting_grid <- crossing(
   trees = 500 * 1:20,
@@ -495,13 +438,14 @@ boosting_tune_res <- tune_grid(
   resamples = cv_folds_boosting,
   grid = boosting_grid,
   metrics = class_metrics)
-
+beepr::beep()
 # Getting metrics.
 
 boosting_tune_metrics <-
   boosting_tune_res |>
   collect_metrics()
 
+# Plotting the metrics
 boosting_tune_metrics |>
   filter(.metric == "sensitivity") |>
   ggplot(aes(
@@ -523,7 +467,7 @@ boosting_tune_metrics |>
 boosting_tune_metrics |>
   filter(learn_rate == 0.01 & tree_depth == 2 & trees <= 5000) |>
   select(trees:learn_rate, .metric, mean, std_err) |>
-  filter(.metric %in% c("sensitivity", "specificity")) |>
+  filter(.metric %in% c("sensitivity", "precision")) |> # change to precision
   mutate(low = mean - std_err, high = mean + std_err) |>
   select(-std_err) |>
   pivot_wider(
@@ -531,21 +475,20 @@ boosting_tune_metrics |>
     names_from = .metric,
     values_from = c(mean, low, high)
   ) |>
-  select(trees, specificity = mean_specificity, ends_with("sensitivity")) |>
+  select(trees, precision = mean_precision, ends_with("sensitivity")) |>
   ggplot() +
   aes(
-    x = specificity,
+    x = precision,
     y = mean_sensitivity, ymin = low_sensitivity, ymax = high_sensitivity,
     colour = factor(trees, ordered = TRUE)
   ) +
   geom_pointrange() +
-  geom_text(aes(label = trees), position = position_nudge(y = .01)) +
+  geom_text(aes(label = trees), position = position_nudge(y = .001)) +
   scale_colour_viridis_d(begin = .3, end = .95, option = "E") +
   theme_bw() +
   labs(colour = "trees")
 
-########
-boosting_tune_metrics |>
+boosting_trees_learn <- boosting_tune_metrics |>
   filter(learn_rate <= 0.01 & tree_depth >= 2 & trees <= 5000) |>
   select(trees:learn_rate, .metric, mean) |>
   pivot_wider(
@@ -567,7 +510,6 @@ boosting_tune_metrics |>
   labs(colour = "trees")
 
 # Finalizing the workflow.
-
 boosting_best <-
   boosting_tune_metrics |>
   filter(tree_depth == 2, learn_rate == 0.01, trees == 2500) |>
@@ -595,6 +537,7 @@ precision_Boosting <- confution_matrix[1]$table %>% precision()
 accuracy_Boosting <- confution_matrix[1]$table %>% accuracy()
 
 # Final model - lasso. 
+
 # Loading the uncensored data.
 lasso_final_model <- lasso_wf_tuned %>%
   last_fit(final_training_prediction_split)
@@ -606,8 +549,10 @@ lasso_final_model |>
     Predicted_Prob = mean(.pred_Enrolled)
   )
 
-load("data/offers_uncensored.RData")
+# Loading the uncensored data
+load("./offers_uncensored.RData")
 
+# Splitting the data
 final_training_prediction_split <-
   offers |>
   make_appyear_split(test_year = 2023)
@@ -624,11 +569,3 @@ lasso_final_test_metrics <-
   lasso_final_test_metrics |> 
   select(.metric, .estimate) |> 
   mutate(model = "lasso")
-
-
-
-
-
-
-
-
